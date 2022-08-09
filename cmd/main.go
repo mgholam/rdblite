@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	os.Mkdir("data", 0755)
 
 	db := NewDB()
 	defer db.Close()
