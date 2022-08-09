@@ -35,7 +35,7 @@ func NewDB() *DB {
 	db.Table1 = &rdblite.Table[Table1]{
 		GobFilename: "data/table1.gob",
 	}
-    if FileExists(db.Table1.GobFilename) {
+	if FileExists(db.Table1.GobFilename) {
 		db.Table1.LoadGob()
 	} else {
 		db.Table1.LoadJson("table1.json")
@@ -50,7 +50,7 @@ func NewDB() *DB {
 ## results
 
 - using `gob` is 5x faster than `json` especially on slower cpus for loading and saving
-- case insensitive search is 2x-3x slower
+- case insensitive search is 2x-3x slower than case sensitive search
 - filter with for loop -> very good
   - ~15ms worst case when returning 100,000 items (powersave mode)
   - ~7ms when returning 100,000 items (performance mode)
@@ -58,7 +58,7 @@ func NewDB() *DB {
 
 ### perf test 100,000 invoices
 
-```sh
+```c#
 # powersave mode
 # --------------------------------------------------------------------
 2022/08/09 18:21:57 data/docs.gob : item count = 14790
