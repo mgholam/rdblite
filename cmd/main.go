@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mgholm/rdblite"
+	"github.com/mgholam/rdblite"
 )
 
 func main() {

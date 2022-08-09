@@ -1,4 +1,4 @@
-package rdblite
+package storagefile
 
 import (
 	"bufio"
