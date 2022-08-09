@@ -60,6 +60,7 @@ func NewDB() *DB {
 
 ```sh
 # powersave mode
+# --------------------------------------------------------------------
 2022/08/09 18:21:57 data/docs.gob : item count = 14790
 2022/08/09 18:21:57 read gob time = 44.588292ms
 2022/08/09 18:21:58 data/table1.gob : item count = 100000
@@ -88,7 +89,9 @@ Alloc = 15 MB   TotalAlloc = 24 MB      Sys = 30 MB     NumGC = 4
 2022/08/09 18:21:58 data/docs.gob : item count = 14790
 2022/08/09 18:21:58 write gob 50.275617ms
 
+
 # performance mode
+# --------------------------------------------------------------------
 2022/08/09 18:20:16 data/docs.gob : item count = 14790
 2022/08/09 18:20:16 read gob time = 14.578234ms
 2022/08/09 18:20:16 data/table1.gob : item count = 100000
