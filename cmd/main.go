@@ -23,8 +23,9 @@ func main() {
 
 	log.Println("query rows count =", len(rows))
 
-	rows = db.Table1.Search("Moen")
+	rows = db.Table1.Search("tomas")
 	log.Println("search rows count =", len(rows))
+	fmt.Println(rows[0])
 
 	// r := Table1{
 	// 	// ID:           100_000,

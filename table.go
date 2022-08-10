@@ -13,12 +13,23 @@ import (
 
 type TableInterface interface {
 	GetID() int
+	contains(string) bool
+	// setstr(string)
 }
 
 // BaseTable to inheerit ID from
 type BaseTable struct {
-	ID int
+	ID     int
+	Rowstr string `json:"-"`
 }
+
+func (t BaseTable) contains(str string) bool {
+	return strings.Contains(t.Rowstr, str)
+}
+
+// func (t *BaseTable) setstr(str string) {
+// 	t.rowstr = str
+// }
 
 func (t BaseTable) GetID() int {
 	return t.ID
@@ -51,6 +62,12 @@ func (t *Table[T]) LoadGob() {
 	}
 	log.Printf("%s : item count = %d\n", t.GobFilename, len(t.rows))
 	log.Println("read gob time =", time.Since(start))
+
+	start = time.Now()
+	for _, r := range t.rows {
+		genstr(r)
+	}
+	log.Println("init search time =", time.Since(start))
 }
 
 // Save data for table as gob file
@@ -172,11 +189,15 @@ func (t *Table[T]) Query(predicate func(r *T) bool) []*T {
 // Search on any field contains str
 func (t *Table[T]) Search(str string) []*T {
 	start := time.Now()
-	// str = strings.ToLower(str)
+	str = strings.ToLower(str)
 	data := []*T{}
 	for _, r := range t.rows {
 		// if unsafeContains(r, str) {
-		if anyContains(r, str) {
+		// if anyContains(r, str) {
+		// 	data = append(data, r)
+		// }
+		item := *r
+		if item.contains(str) {
 			data = append(data, r)
 		}
 	}
@@ -184,19 +205,37 @@ func (t *Table[T]) Search(str string) []*T {
 	return data
 }
 
-func anyContains[T any](item *T, val string) bool {
-	// this reflection is 2x faster any other way
+// func anyContains[T any](item *T, val string) bool {
+// 	// this reflection is 2x faster any other way
+// 	e := reflect.ValueOf(item).Elem()
+// 	for i := 0; i < e.NumField(); i++ {
+// 		vv := e.Field(i).String()
+// 		// tolower is 5x slower 146ms than not 27ms (power save mode)
+// 		//            5x         39ms          10ms (performance mode)
+// 		if strings.Contains(vv, val) {
+// 			//if strings.Contains(strings.ToLower(vv), val) {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
+
+func genstr[T any](item *T) {
+	sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
 	for i := 0; i < e.NumField(); i++ {
 		vv := e.Field(i).String()
-		// tolower is 5x slower 146ms than not 27ms (power save mode)
-		//            5x         39ms          10ms (performance mode)
-		if strings.Contains(vv, val) {
-			//if strings.Contains(strings.ToLower(vv), val) {
-			return true
-		}
+		sb.WriteString(vv)
+		sb.WriteRune(' ')
 	}
-	return false
+	rr := e.FieldByName("Rowstr")
+	rr.SetString(strings.ToLower(sb.String()))
+	// method := reflect.ValueOf(item).MethodByName("setstr")
+
+	// inputs := make([]reflect.Value, 1)
+	// inputs[0] = reflect.ValueOf(strings.ToLower(sb.String()))
+	// // private.SetAccessible(method)
+	// method.Call(inputs)
 }
 
 // var xStruct *xunsafe.Struct
