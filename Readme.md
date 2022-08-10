@@ -1,4 +1,5 @@
 # RDBLite
+
 RaptorDB Lite is a simplified poor mans database engine based on my c# `RaptorDB Document Store Database`. It uses go 1.18 generics.
 
 
@@ -45,7 +46,42 @@ func NewDB() *DB {
 }
 ```
 
+### Table functionality
 
+```go
+// load from gob file stored in Table1.GobFilename
+// this is not thread safe 
+db.Table1.LoadGob()
+
+// load from a json file 
+// this is not thread safe 
+db.Table1.LoadJson("table1.json")
+
+// save to gob file stored in Table1.GobFilename
+db.Table1.SaveGob()
+
+// query rows
+rows := db.Table1.Query(func(row *Table1) bool {
+	return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
+})
+
+// text search every field
+rows = db.Table1.Search("Moen")
+
+// find by ID
+row := db.Table1.FindByID(99_999)
+
+// delete by ID
+db.Table1.Delete(20)
+
+// add/update a row
+r := Table1{
+    CustomerName: "aaa",
+    ItemCount:    42,
+}
+r.ID = 100_000
+db.Table1.AddUpdate(r)
+```
 
 ## results
 

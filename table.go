@@ -25,7 +25,7 @@ func (t *BaseTable) GetID() int {
 }
 
 type Table[T TableInterface] struct {
-	sync.Mutex
+	m           sync.Mutex
 	GobFilename string
 	rows        []*T
 }
@@ -59,8 +59,8 @@ func (t *Table[T]) SaveGob() {
 		log.Fatalln("table gob filename not set")
 		return
 	}
-	t.Lock()
-	defer t.Unlock()
+	t.m.Lock()
+	defer t.m.Unlock()
 	start := time.Now()
 	gg, _ := os.Create(t.GobFilename)
 	defer gg.Close()
@@ -74,10 +74,10 @@ func (t *Table[T]) SaveGob() {
 	log.Println("write gob", time.Since(start))
 }
 
-// Load data for table, not thread safe only call on startup
-func (tt *Table[T]) Load(fn func(t *Table[T]) []*T) {
-	tt.rows = fn(tt)
-}
+// // Load data for table, not thread safe only call on startup
+// func (tt *Table[T]) Load(fn func(t *Table[T]) []*T) {
+// 	tt.rows = fn(tt)
+// }
 
 // Load json file for table
 func (t *Table[T]) LoadJson(fn string) {
@@ -91,15 +91,16 @@ func (t *Table[T]) LoadJson(fn string) {
 func (t *Table[T]) AddUpdate(r T) {
 	found, idx := t.findIndex(r.GetID())
 	if !found {
-		t.Lock()
+		t.m.Lock()
+		// FIX : set ID
 		t.rows = append(t.rows, &r)
-		t.Unlock()
+		t.m.Unlock()
 		return
 	}
 	// FIX : update row here -> copy data from r to item
-	t.Lock()
+	t.m.Lock()
 	t.rows[idx] = &r
-	t.Unlock()
+	t.m.Unlock()
 }
 
 // Delete a row with locking
@@ -110,7 +111,7 @@ func (t *Table[T]) Delete(id int) {
 		log.Println("delete by id not found ", time.Since(start))
 		return
 	}
-	t.Lock()
+	t.m.Lock()
 	if idx < len(t.rows)-1 {
 		// Copy last element to index idx
 		t.rows[idx] = t.rows[len(t.rows)-1]
@@ -118,7 +119,7 @@ func (t *Table[T]) Delete(id int) {
 	// Erase last element (write zero value)
 	t.rows[len(t.rows)-1] = nil
 	t.rows = t.rows[:len(t.rows)-1]
-	t.Unlock()
+	t.m.Unlock()
 	log.Println("delete by id time =", time.Since(start))
 }
 

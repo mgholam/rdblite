@@ -24,8 +24,15 @@ func main() {
 	log.Println("query rows count =", len(rows))
 
 	rows = db.Table1.Search("Moen")
-
 	log.Println("search rows count =", len(rows))
+
+	// r := Table1{
+	// 	CustomerName: "aaa",
+	// 	ItemCount:    42,
+	// 	// ID:           100_000,
+	// }
+	// r.ID = 100_000
+	// db.Table1.AddUpdate(r)
 
 	// db.Table1.Delete(99999)
 	log.Println("id 99,999 =", db.Table1.FindByID(99_999))
