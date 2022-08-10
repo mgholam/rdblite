@@ -6,11 +6,11 @@ RaptorDB Lite is a simplified poor mans database engine based on my c# `RaptorDB
 
 ## How to use
 
-Your "tables" should inherit from `*rdblite.BaseTable ` to ensure it has `ID` and `GetID()` :
+Your "tables" should inherit from `rdblite.BaseTable ` to ensure it has `ID` and `GetID()` :
 
 ```go
 type Table1 struct {
-	*rdblite.BaseTable // adds ID int and other things
+	rdblite.BaseTable // adds ID int and other things
 	CustomerName string
 	ItemCount    int
 }
@@ -50,11 +50,11 @@ func NewDB() *DB {
 
 ```go
 // load from gob file stored in Table1.GobFilename
-// this is not thread safe 
+// this is not thread safe
 db.Table1.LoadGob()
 
-// load from a json file 
-// this is not thread safe 
+// load from a json file
+// this is not thread safe
 db.Table1.LoadJson("table1.json")
 
 // save to gob file stored in Table1.GobFilename

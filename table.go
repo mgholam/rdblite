@@ -20,7 +20,7 @@ type BaseTable struct {
 	ID int
 }
 
-func (t *BaseTable) GetID() int {
+func (t BaseTable) GetID() int {
 	return t.ID
 }
 

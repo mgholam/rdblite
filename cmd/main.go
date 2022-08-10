@@ -27,9 +27,9 @@ func main() {
 	log.Println("search rows count =", len(rows))
 
 	// r := Table1{
+	// 	// ID:           100_000,
 	// 	CustomerName: "aaa",
 	// 	ItemCount:    42,
-	// 	// ID:           100_000,
 	// }
 	// r.ID = 100_000
 	// db.Table1.AddUpdate(r)
@@ -70,19 +70,19 @@ func FileExists(fn string) bool {
 // -----------------------------------------------------------------------------
 
 type Customers struct {
-	*rdblite.BaseTable
+	rdblite.BaseTable
 	Firstname string
 	Lastname  string
 }
 
 type Table1 struct {
-	*rdblite.BaseTable
+	rdblite.BaseTable
 	CustomerName string
 	ItemCount    int
 }
 
 type Doc struct {
-	*rdblite.BaseTable
+	rdblite.BaseTable
 	From            string
 	To              string
 	Subject         string
