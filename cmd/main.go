@@ -22,10 +22,16 @@ func main() {
 	})
 
 	log.Println("query rows count =", len(rows))
+	fmt.Println()
 
-	rows = db.Table1.Search("tomas")
+	str := "tomas"
+
+	rows = db.Table1.Search(str)
+	log.Println("search for :", str)
 	log.Println("search rows count =", len(rows))
 	fmt.Println(rows[0])
+	fmt.Println()
+	// db.Table1.TotalRows()
 
 	// r := Table1{
 	// 	// ID:           100_000,
@@ -37,15 +43,20 @@ func main() {
 
 	// db.Table1.Delete(99999)
 	log.Println("id 99,999 =", db.Table1.FindByID(99_999))
+	fmt.Println()
 
-	rr := db.Docs.Search("10017372")
+	str = "10017372"
+	rr := db.Docs.Search(str)
+	log.Println("search for :", str)
 	log.Println("search rows count =", len(rr))
 	log.Println(rr[0])
+	fmt.Println()
 	// db.Table1.AddUpdate(Table1{
 
 	// })
 
 	PrintMemUsage()
+	fmt.Println()
 }
 
 // -----------------------------------------------------------------------------
@@ -131,18 +142,21 @@ func NewDB() *DB {
 	} else {
 		db.Docs.LoadJson("Archive.json")
 	}
+	fmt.Println()
 
 	if FileExists(db.Table1.GobFilename) {
 		db.Table1.LoadGob()
 	} else {
 		db.Table1.LoadJson("table1.json")
 	}
+	fmt.Println()
 
 	if FileExists(db.Customers.GobFilename) {
 		db.Customers.LoadGob()
 	} else {
 		db.Customers.LoadJson("customers.json")
 	}
+	fmt.Println()
 
 	return &db
 }

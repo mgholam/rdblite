@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 type TableInterface interface {
@@ -20,16 +21,12 @@ type TableInterface interface {
 // BaseTable to inheerit ID from
 type BaseTable struct {
 	ID     int
-	Rowstr string `json:"-"`
+	rowstr string
 }
 
 func (t BaseTable) contains(str string) bool {
-	return strings.Contains(t.Rowstr, str)
+	return strings.Contains(t.rowstr, str)
 }
-
-// func (t *BaseTable) setstr(str string) {
-// 	t.rowstr = str
-// }
 
 func (t BaseTable) GetID() int {
 	return t.ID
@@ -39,6 +36,10 @@ type Table[T TableInterface] struct {
 	m           sync.Mutex
 	GobFilename string
 	rows        []*T
+}
+
+func (t *Table[T]) TotalRows() int {
+	return len(t.rows)
 }
 
 // Load binary serialized data from disk, not thread safe only call on startup
@@ -63,9 +64,10 @@ func (t *Table[T]) LoadGob() {
 	log.Printf("%s : item count = %d\n", t.GobFilename, len(t.rows))
 	log.Println("read gob time =", time.Since(start))
 
+	// generate rowstr for fast Search()
 	start = time.Now()
 	for _, r := range t.rows {
-		genstr(r)
+		go genstr(r)
 	}
 	log.Println("init search time =", time.Since(start))
 }
@@ -91,11 +93,6 @@ func (t *Table[T]) SaveGob() {
 	log.Println("write gob", time.Since(start))
 }
 
-// // Load data for table, not thread safe only call on startup
-// func (tt *Table[T]) Load(fn func(t *Table[T]) []*T) {
-// 	tt.rows = fn(tt)
-// }
-
 // Load json file for table
 func (t *Table[T]) LoadJson(fn string) {
 	start := time.Now()
@@ -109,12 +106,12 @@ func (t *Table[T]) AddUpdate(r T) {
 	found, idx := t.findIndex(r.GetID())
 	if !found {
 		t.m.Lock()
-		// FIX : set ID
+		// FIX: set ID
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
 		return
 	}
-	// FIX : update row here -> copy data from r to item
+	// FIX: update row here -> copy data from r to item
 	t.m.Lock()
 	t.rows[idx] = &r
 	t.m.Unlock()
@@ -163,11 +160,6 @@ func (t *Table[T]) FindByID(id int) *T {
 			log.Println("find by id time =", time.Since(start))
 			return r
 		}
-		// e := reflect.ValueOf(r).Elem()
-		// if int(e.FieldByName("Id").Int()) == id {
-		// 	log.Println("find by id time =", time.Since(start))
-		// 	return r
-		// }
 	}
 
 	return nil
@@ -189,15 +181,29 @@ func (t *Table[T]) Query(predicate func(r *T) bool) []*T {
 // Search on any field contains str
 func (t *Table[T]) Search(str string) []*T {
 	start := time.Now()
-	str = strings.ToLower(str)
+	str = strings.ToLower(strings.Trim(str, " \t"))
+	v := strings.Split(str, " ")
 	data := []*T{}
+	// FIX: implement OR
 	for _, r := range t.rows {
-		// if unsafeContains(r, str) {
 		// if anyContains(r, str) {
 		// 	data = append(data, r)
 		// }
 		item := *r
-		if item.contains(str) {
+		found := 0
+		vc := 0
+		for _, s := range v {
+			if s == "" {
+				continue
+			}
+			// 10x faster than reflect
+			// AND search
+			if item.contains(s) {
+				found++
+			}
+			vc++
+		}
+		if found == vc {
 			data = append(data, r)
 		}
 	}
@@ -224,35 +230,11 @@ func genstr[T any](item *T) {
 	sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
 	for i := 0; i < e.NumField(); i++ {
-		vv := e.Field(i).String()
+		vv := e.Field(i).String() // FIX: convert non strings to string here
 		sb.WriteString(vv)
 		sb.WriteRune(' ')
 	}
-	rr := e.FieldByName("Rowstr")
+	rr := e.FieldByName("rowstr")
+	rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
 	rr.SetString(strings.ToLower(sb.String()))
-	// method := reflect.ValueOf(item).MethodByName("setstr")
-
-	// inputs := make([]reflect.Value, 1)
-	// inputs[0] = reflect.ValueOf(strings.ToLower(sb.String()))
-	// // private.SetAccessible(method)
-	// method.Call(inputs)
 }
-
-// var xStruct *xunsafe.Struct
-
-// func unsafeContains[T any](item *T, val string) bool {
-// 	if xStruct == nil {
-// 		xStruct = xunsafe.NewStruct(reflect.TypeOf(item))
-// 	}
-// 	// this reflection is 2x faster any other way
-// 	//e := reflect.ValueOf(item).Elem()
-// 	ptr := unsafe.Pointer(item)
-// 	for i := range xStruct.Fields {
-// 		candidate := xStruct.Fields[i].String(ptr)
-// 		//if strings.Contains(strings.ToLower(vv), val) {
-// 		if strings.Contains(candidate, val) {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
