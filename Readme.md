@@ -9,7 +9,7 @@ Features :
 
 ## How to use
 
-Your "tables" should inherit from `rdblite.BaseTable ` to ensure it has `ID` and `GetID()` :
+Your "tables" should inherit from `rdblite.BaseTable` to ensure it has `ID` and `GetID()` :
 
 ```go
 type Table1 struct {
