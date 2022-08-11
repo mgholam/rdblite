@@ -99,6 +99,11 @@ func (t *Table[T]) LoadJson(fn string) {
 	b, _ := os.ReadFile(fn)
 	json.Unmarshal(b, &t.rows)
 	log.Println("loading", fn, ",time =", time.Since(start))
+	start = time.Now()
+	for _, r := range t.rows {
+		go genstr(r)
+	}
+	log.Println("init search time =", time.Since(start))
 }
 
 // AddUpdate a row with locking

@@ -2,7 +2,10 @@
 
 RaptorDB Lite is a simplified poor mans database engine based on my c# `RaptorDB Document Store Database`. It uses go 1.18 generics.
 
-
+Features :
+- Full text search all fields of a row `Search("alice bob")` will search for "alice" AND "bob" in any of the fields for a row
+- Query with a predicate function to filter rows
+-
 
 ## How to use
 
@@ -21,6 +24,7 @@ You can create a `DB` struct to contain your "tables" :
 ```go
 type DB struct {
 	Table1    *rdblite.Table[Table1]
+	// add more "tables" here
 }
 func (d *DB) Close() {
 	// save all tables
@@ -74,6 +78,9 @@ row := db.Table1.FindByID(99_999)
 // delete by ID
 db.Table1.Delete(20)
 
+// row count
+i := db.Table1.TotalRows()
+
 // add/update a row
 r := Table1{
     CustomerName: "aaa",
@@ -91,6 +98,7 @@ db.Table1.AddUpdate(r)
   - ~15ms worst case when returning 100,000 items (powersave mode)
   - ~7ms when returning 100,000 items (performance mode)
 - `TableInterface.GetID()` 25x faster than `reflect` for find by ID
+- `Search()` is now 10x faster with preprocessing on load (80ms -> 7ms in power save mode)
 
 ### perf test 100,000 invoices
 
