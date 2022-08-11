@@ -186,9 +186,6 @@ func (t *Table[T]) Search(str string) []*T {
 	data := []*T{}
 	// FIX: implement OR
 	for _, r := range t.rows {
-		// if anyContains(r, str) {
-		// 	data = append(data, r)
-		// }
 		item := *r
 		found := 0
 		vc := 0
@@ -197,7 +194,7 @@ func (t *Table[T]) Search(str string) []*T {
 				continue
 			}
 			// 10x faster than reflect
-			// AND search
+			// currently AND search
 			if item.contains(s) {
 				found++
 			}
@@ -210,21 +207,6 @@ func (t *Table[T]) Search(str string) []*T {
 	log.Println("search time =", time.Since(start))
 	return data
 }
-
-// func anyContains[T any](item *T, val string) bool {
-// 	// this reflection is 2x faster any other way
-// 	e := reflect.ValueOf(item).Elem()
-// 	for i := 0; i < e.NumField(); i++ {
-// 		vv := e.Field(i).String()
-// 		// tolower is 5x slower 146ms than not 27ms (power save mode)
-// 		//            5x         39ms          10ms (performance mode)
-// 		if strings.Contains(vv, val) {
-// 			//if strings.Contains(strings.ToLower(vv), val) {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
 
 func genstr[T any](item *T) {
 	sb := strings.Builder{}
