@@ -3,9 +3,11 @@ package rdblite
 import (
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -214,11 +216,50 @@ func (t *Table[T]) Search(str string) []*T {
 }
 
 func genstr[T any](item *T) {
+	// FIX: handle time.Time
 	sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
 	for i := 0; i < e.NumField(); i++ {
-		vv := e.Field(i).String() // FIX: convert non strings to string here
-		sb.WriteString(vv)
+		ef := e.Field(i)
+		switch ef.Kind() {
+		case reflect.String:
+			sb.WriteString(ef.String())
+		case reflect.Int64:
+			sb.WriteString(strconv.FormatInt(ef.Interface().(int64), 10))
+		case reflect.Int8:
+			iv := ef.Interface().(int8)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Int16:
+			iv := ef.Interface().(int16)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Int:
+			iv := ef.Interface().(int)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Int32:
+			iv := ef.Interface().(int32)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Uint64:
+			sb.WriteString(strconv.FormatUint(ef.Interface().(uint64), 10))
+		case reflect.Uint8:
+			iv := ef.Interface().(uint8)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Uint16:
+			iv := ef.Interface().(uint16)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Uint:
+			iv := ef.Interface().(uint)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Uint32:
+			iv := ef.Interface().(uint32)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Float32:
+			iv := ef.Interface().(float32)
+			sb.WriteString(fmt.Sprintf("%f", iv))
+		case reflect.Float64:
+			iv := ef.Interface().(float64)
+			sb.WriteString(fmt.Sprintf("%f", iv))
+		}
+
 		sb.WriteRune(' ')
 	}
 	rr := e.FieldByName("rowstr")

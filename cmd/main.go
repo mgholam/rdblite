@@ -4,15 +4,51 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/mgholam/rdblite"
 )
 
+type testref struct {
+	A int
+	B int8
+	C int16
+	D int32
+	E int64
+	I uint
+	F uint8
+	G uint16
+	H uint32
+	J uint64
+	K float32
+	L float64
+	S string
+}
+
 func main() {
 	os.Mkdir("data", 0755)
+
+	tt := testref{
+		A: 1,
+		B: 2,
+		C: 3,
+		D: 4,
+		E: 5,
+		F: 6,
+		G: 7,
+		H: 8,
+		I: 9,
+		J: 10,
+		K: 11,
+		L: 12,
+		S: "bob",
+	}
+	genstr(&tt)
 
 	db := NewDB()
 	defer db.Close()
@@ -29,7 +65,7 @@ func main() {
 	rows = db.Table1.Search(str)
 	log.Println("search for :", str)
 	log.Println("search rows count =", len(rows))
-	fmt.Println(rows[0])
+	//fmt.Println(rows[0])
 	fmt.Println()
 	// db.Table1.TotalRows()
 
@@ -57,6 +93,56 @@ func main() {
 
 	PrintMemUsage()
 	fmt.Println()
+}
+
+func genstr[T any](item *T) {
+	sb := strings.Builder{}
+	e := reflect.ValueOf(item).Elem()
+	for i := 0; i < e.NumField(); i++ {
+		ef := e.Field(i)
+		switch ef.Kind() {
+		case reflect.String:
+			sb.WriteString(ef.String())
+		case reflect.Int64:
+			sb.WriteString(strconv.FormatInt(ef.Interface().(int64), 10))
+		case reflect.Int8:
+			iv := ef.Interface().(int8)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Int16:
+			iv := ef.Interface().(int16)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Int:
+			iv := ef.Interface().(int)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Int32:
+			iv := ef.Interface().(int32)
+			sb.WriteString(strconv.FormatInt(int64(iv), 10))
+		case reflect.Uint64:
+			sb.WriteString(strconv.FormatUint(ef.Interface().(uint64), 10))
+		case reflect.Uint8:
+			iv := ef.Interface().(uint8)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Uint16:
+			iv := ef.Interface().(uint16)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Uint:
+			iv := ef.Interface().(uint)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Uint32:
+			iv := ef.Interface().(uint32)
+			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+		case reflect.Float32:
+			iv := ef.Interface().(float32)
+			sb.WriteString(fmt.Sprintf("%f", iv))
+		case reflect.Float64:
+			iv := ef.Interface().(float64)
+			sb.WriteString(fmt.Sprintf("%f", iv))
+		}
+		sb.WriteRune(' ')
+	}
+	rr := e.FieldByName("rowstr")
+	rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
+	rr.SetString(strings.ToLower(sb.String()))
 }
 
 // -----------------------------------------------------------------------------
