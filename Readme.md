@@ -1,11 +1,11 @@
 # RDBLite
 
-RaptorDB Lite is a simplified poor mans database engine based on my c# `RaptorDB Document Store Database`. It uses go 1.18 generics.
+RaptorDB Lite is a simplified poor mans database engine based on my c# `RaptorDB Document Store Database`. It uses go 1.18 generics. For an example and test see: [https://github.com/mgholam/rdblite-sample](https://github.com/mgholam/rdblite-sample)
 
 Features :
 - Full text search all fields of a row `Search("alice bob")` will search for "alice" AND "bob" in any of the fields for a row
 - Query with a predicate function to filter rows
--
+- `StorageFile` append only data file for really fast storing of `[]byte` like `json` 
 
 ## How to use
 
@@ -79,7 +79,7 @@ row := db.Table1.FindByID(99_999)
 db.Table1.Delete(20)
 
 // row count
-i := db.Table1.TotalRows()
+count := db.Table1.TotalRows()
 
 // add/update a row
 r := Table1{
