@@ -5,11 +5,11 @@ RaptorDB Lite is a simplified poor mans database engine based on my c# `RaptorDB
 Features :
 - Full text search all fields of a row `Search("alice bob")` will search for "alice" AND "bob" in any of the fields for a row
 - Query with a predicate function to filter rows
-- `StorageFile` append only data file for really fast storing of `[]byte` like `json` 
+- `StorageFile` append only data file for really fast storing of `[]byte` like `json`
 
 ## How to use
 
-Your "tables" should inherit from `rdblite.BaseTable` to ensure it has `ID` and `GetID()` :
+Your "tables" should inherit from `rdblite.BaseTable` to ensure it has `ID` and other internal functions:
 
 ```go
 type Table1 struct {
@@ -23,7 +23,7 @@ You can create a `DB` struct to contain your "tables" :
 
 ```go
 type DB struct {
-	Table1    *rdblite.Table[Table1]
+	Table1    *rdblite.Table[*Table1]
 	// add more "tables" here
 }
 func (d *DB) Close() {
@@ -37,7 +37,7 @@ And to initialize the `DB`:
 ```go
 func NewDB() *DB {
 	db := DB{}
-	db.Table1 = &rdblite.Table[Table1]{
+	db.Table1 = &rdblite.Table[*Table1]{
 		GobFilename: "data/table1.gob",
 	}
 	if FileExists(db.Table1.GobFilename) {
@@ -86,8 +86,7 @@ r := Table1{
     CustomerName: "aaa",
     ItemCount:    42,
 }
-r.ID = 100_000
-db.Table1.AddUpdate(r)
+db.Table1.AddUpdate(&r)
 ```
 
 ## results
@@ -97,7 +96,7 @@ db.Table1.AddUpdate(r)
 - filter with for loop -> very good
   - ~15ms worst case when returning 100,000 items (powersave mode)
   - ~7ms when returning 100,000 items (performance mode)
-- `TableInterface.GetID()` 25x faster than `reflect` for find by ID
+- `TableInterface.getID()` 25x faster than `reflect` for find by ID
 - `Search()` is now 10x faster with preprocessing on load (80ms -> 7ms in power save mode)
 
 ### perf test 100,000 invoices

@@ -116,13 +116,13 @@ func (t *Table[T]) AddUpdate(r T) int {
 	found, idx := t.findIndex(r.getID())
 	if !found {
 		t.m.Lock()
-		// FIX: set ID
+		// set ID
 		r.setID(t.TotalRows() + 1)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
 		return r.getID()
 	}
-	// FIX: update row here -> copy data from r to item
+	// FIX: update row here -> copy data from r to item ??
 	t.m.Lock()
 	t.rows[idx] = &r
 	t.m.Unlock()
@@ -223,7 +223,7 @@ func (t *Table[T]) Search(str string) []*T {
 }
 
 func genstr[T any](item T) {
-	// FIX: handle time.Time, uuid
+	// handle time.Time, uuid
 	str := fmt.Sprintf("%v", item)
 	// sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()

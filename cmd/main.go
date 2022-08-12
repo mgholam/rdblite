@@ -74,11 +74,9 @@ func main() {
 	fmt.Println("rows =", db.Table1.TotalRows())
 
 	r := Table1{
-		// ID:           100_000,
 		CustomerName: "aaa",
 		ItemCount:    42,
 	}
-	// r.ID = 100_000
 	id := db.Table1.AddUpdate(&r)
 	fmt.Println("inserted id ", id)
 
@@ -163,7 +161,7 @@ func byteToMegaByte(b uint64) uint64 {
 	return b / 1024 / 1024
 }
 
-func FileExists(fn string) bool {
+func fileExists(fn string) bool {
 	_, e := os.Stat(fn)
 	return e == nil
 }
@@ -226,21 +224,21 @@ func NewDB() *DB {
 		GobFilename: "data/docs.gob",
 	}
 
-	if FileExists(db.Docs.GobFilename) {
+	if fileExists(db.Docs.GobFilename) {
 		db.Docs.LoadGob()
 	} else {
 		db.Docs.LoadJson("Archive.json")
 	}
 	fmt.Println()
 
-	if FileExists(db.Table1.GobFilename) {
+	if fileExists(db.Table1.GobFilename) {
 		db.Table1.LoadGob()
 	} else {
 		db.Table1.LoadJson("table1.json")
 	}
 	fmt.Println()
 
-	if FileExists(db.Customers.GobFilename) {
+	if fileExists(db.Customers.GobFilename) {
 		db.Customers.LoadGob()
 	} else {
 		db.Customers.LoadJson("customers.json")
