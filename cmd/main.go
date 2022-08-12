@@ -80,7 +80,7 @@ func main() {
 		ItemCount:    42,
 	}
 	// r.ID = 100_000
-	id := db.Table1.AddUpdate(r)
+	id := db.Table1.AddUpdate(&r)
 	fmt.Println("inserted id ", id)
 
 	// db.Table1.Delete(99999)
@@ -198,9 +198,9 @@ type Doc struct {
 }
 
 type DB struct {
-	Table1    *rdblite.Table[Table1]
-	Customers *rdblite.Table[Customers]
-	Docs      *rdblite.Table[Doc]
+	Table1    *rdblite.Table[*Table1]
+	Customers *rdblite.Table[*Customers]
+	Docs      *rdblite.Table[*Doc]
 }
 
 func (d *DB) Close() {
@@ -214,15 +214,15 @@ func NewDB() *DB {
 
 	db := DB{}
 
-	db.Table1 = &rdblite.Table[Table1]{
+	db.Table1 = &rdblite.Table[*Table1]{
 		GobFilename: "data/table1.gob",
 	}
 
-	db.Customers = &rdblite.Table[Customers]{
+	db.Customers = &rdblite.Table[*Customers]{
 		GobFilename: "data/customers.gob",
 	}
 
-	db.Docs = &rdblite.Table[Doc]{
+	db.Docs = &rdblite.Table[*Doc]{
 		GobFilename: "data/docs.gob",
 	}
 

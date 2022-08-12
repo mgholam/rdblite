@@ -17,7 +17,7 @@ import (
 type TableInterface interface {
 	GetID() int
 	contains(string) bool
-	// setID(int)
+	setID(int)
 }
 
 // BaseTable to inhierit ID from
@@ -26,17 +26,17 @@ type BaseTable struct {
 	rowstr string
 }
 
-func (t BaseTable) contains(str string) bool {
+func (t *BaseTable) contains(str string) bool {
 	return strings.Contains(t.rowstr, str)
 }
 
-func (t BaseTable) GetID() int {
+func (t *BaseTable) GetID() int {
 	return t.ID
 }
 
-// func (t BaseTable) setID(id int) {
-// 	t.ID = id
-// }
+func (t *BaseTable) setID(id int) {
+	t.ID = id
+}
 
 type Table[T TableInterface] struct {
 	m           sync.Mutex
@@ -73,7 +73,7 @@ func (t *Table[T]) LoadGob() {
 	// generate rowstr for fast Search()
 	start = time.Now()
 	for _, r := range t.rows {
-		go genstr(r)
+		go genstr(*r)
 	}
 	log.Println("init search time =", time.Since(start))
 }
@@ -107,7 +107,7 @@ func (t *Table[T]) LoadJson(fn string) {
 	log.Println("loading", fn, ",time =", time.Since(start))
 	start = time.Now()
 	for _, r := range t.rows {
-		go genstr(r)
+		go genstr(*r)
 	}
 	log.Println("init search time =", time.Since(start))
 }
@@ -118,7 +118,7 @@ func (t *Table[T]) AddUpdate(r T) int {
 	if !found {
 		t.m.Lock()
 		// FIX: set ID
-		// r.setID(t.TotalRows() + 1)
+		r.setID(t.TotalRows() + 1)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
 		return r.GetID()
@@ -181,11 +181,11 @@ func (t *Table[T]) FindByID(id int) *T {
 }
 
 // Query with a predicate for more control over querying
-func (t *Table[T]) Query(predicate func(r *T) bool) []*T {
+func (t *Table[T]) Query(predicate func(r T) bool) []*T {
 	start := time.Now()
 	data := []*T{}
 	for _, r := range t.rows {
-		if predicate(r) {
+		if predicate(*r) {
 			data = append(data, r)
 		}
 	}
@@ -223,7 +223,7 @@ func (t *Table[T]) Search(str string) []*T {
 	return data
 }
 
-func genstr[T any](item *T) {
+func genstr[T any](item T) {
 	// FIX: handle time.Time, uuid
 	sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
