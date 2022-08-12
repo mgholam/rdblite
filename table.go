@@ -7,15 +7,14 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
 )
 
-type TableInterface interface {
-	GetID() int
+type tableInterface interface {
+	getID() int
 	contains(string) bool
 	setID(int)
 }
@@ -30,7 +29,7 @@ func (t *BaseTable) contains(str string) bool {
 	return strings.Contains(t.rowstr, str)
 }
 
-func (t *BaseTable) GetID() int {
+func (t *BaseTable) getID() int {
 	return t.ID
 }
 
@@ -38,7 +37,7 @@ func (t *BaseTable) setID(id int) {
 	t.ID = id
 }
 
-type Table[T TableInterface] struct {
+type Table[T tableInterface] struct {
 	m           sync.Mutex
 	GobFilename string
 	rows        []*T
@@ -114,20 +113,20 @@ func (t *Table[T]) LoadJson(fn string) {
 
 // AddUpdate a row with locking
 func (t *Table[T]) AddUpdate(r T) int {
-	found, idx := t.findIndex(r.GetID())
+	found, idx := t.findIndex(r.getID())
 	if !found {
 		t.m.Lock()
 		// FIX: set ID
 		r.setID(t.TotalRows() + 1)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
-		return r.GetID()
+		return r.getID()
 	}
 	// FIX: update row here -> copy data from r to item
 	t.m.Lock()
 	t.rows[idx] = &r
 	t.m.Unlock()
-	return r.GetID()
+	return r.getID()
 }
 
 // Delete a row with locking
@@ -156,7 +155,7 @@ func (t *Table[T]) findIndex(id int) (bool, int) {
 	}
 	for idx, r := range t.rows {
 		item := (*r)
-		if item.GetID() == id {
+		if item.getID() == id {
 			return true, idx
 		}
 	}
@@ -171,7 +170,7 @@ func (t *Table[T]) FindByID(id int) *T {
 	for _, r := range t.rows {
 		// 25x faster than reflect.ValueOf(r).Elem()
 		item := *r
-		if item.GetID() == id {
+		if item.getID() == id {
 			log.Println("find by id time =", time.Since(start))
 			return r
 		}
@@ -225,52 +224,53 @@ func (t *Table[T]) Search(str string) []*T {
 
 func genstr[T any](item T) {
 	// FIX: handle time.Time, uuid
-	sb := strings.Builder{}
+	str := fmt.Sprintf("%v", item)
+	// sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
-	for i := 0; i < e.NumField(); i++ {
-		ef := e.Field(i)
-		switch ef.Kind() {
-		case reflect.String:
-			sb.WriteString(ef.String())
-		case reflect.Int64:
-			sb.WriteString(strconv.FormatInt(ef.Interface().(int64), 10))
-		case reflect.Int8:
-			iv := ef.Interface().(int8)
-			sb.WriteString(strconv.FormatInt(int64(iv), 10))
-		case reflect.Int16:
-			iv := ef.Interface().(int16)
-			sb.WriteString(strconv.FormatInt(int64(iv), 10))
-		case reflect.Int:
-			iv := ef.Interface().(int)
-			sb.WriteString(strconv.FormatInt(int64(iv), 10))
-		case reflect.Int32:
-			iv := ef.Interface().(int32)
-			sb.WriteString(strconv.FormatInt(int64(iv), 10))
-		case reflect.Uint64:
-			sb.WriteString(strconv.FormatUint(ef.Interface().(uint64), 10))
-		case reflect.Uint8:
-			iv := ef.Interface().(uint8)
-			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-		case reflect.Uint16:
-			iv := ef.Interface().(uint16)
-			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-		case reflect.Uint:
-			iv := ef.Interface().(uint)
-			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-		case reflect.Uint32:
-			iv := ef.Interface().(uint32)
-			sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-		case reflect.Float32:
-			iv := ef.Interface().(float32)
-			sb.WriteString(fmt.Sprintf("%f", iv))
-		case reflect.Float64:
-			iv := ef.Interface().(float64)
-			sb.WriteString(fmt.Sprintf("%f", iv))
-		}
+	// for i := 0; i < e.NumField(); i++ {
+	// 	ef := e.Field(i)
+	// 	switch ef.Kind() {
+	// 	case reflect.String:
+	// 		sb.WriteString(ef.String())
+	// 	case reflect.Int64:
+	// 		sb.WriteString(strconv.FormatInt(ef.Interface().(int64), 10))
+	// 	case reflect.Int8:
+	// 		iv := ef.Interface().(int8)
+	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
+	// 	case reflect.Int16:
+	// 		iv := ef.Interface().(int16)
+	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
+	// 	case reflect.Int:
+	// 		iv := ef.Interface().(int)
+	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
+	// 	case reflect.Int32:
+	// 		iv := ef.Interface().(int32)
+	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
+	// 	case reflect.Uint64:
+	// 		sb.WriteString(strconv.FormatUint(ef.Interface().(uint64), 10))
+	// 	case reflect.Uint8:
+	// 		iv := ef.Interface().(uint8)
+	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+	// 	case reflect.Uint16:
+	// 		iv := ef.Interface().(uint16)
+	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+	// 	case reflect.Uint:
+	// 		iv := ef.Interface().(uint)
+	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+	// 	case reflect.Uint32:
+	// 		iv := ef.Interface().(uint32)
+	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
+	// 	case reflect.Float32:
+	// 		iv := ef.Interface().(float32)
+	// 		sb.WriteString(fmt.Sprintf("%f", iv))
+	// 	case reflect.Float64:
+	// 		iv := ef.Interface().(float64)
+	// 		sb.WriteString(fmt.Sprintf("%f", iv))
+	// 	}
 
-		sb.WriteRune(' ')
-	}
+	// 	sb.WriteRune(' ')
+	// }
 	rr := e.FieldByName("rowstr")
 	rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
-	rr.SetString(strings.ToLower(sb.String()))
+	rr.SetString(strings.ToLower(str)) //sb.String()))
 }
