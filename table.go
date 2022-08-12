@@ -17,10 +17,10 @@ import (
 type TableInterface interface {
 	GetID() int
 	contains(string) bool
-	// setstr(string)
+	// setID(int)
 }
 
-// BaseTable to inheerit ID from
+// BaseTable to inhierit ID from
 type BaseTable struct {
 	ID     int
 	rowstr string
@@ -33,6 +33,10 @@ func (t BaseTable) contains(str string) bool {
 func (t BaseTable) GetID() int {
 	return t.ID
 }
+
+// func (t BaseTable) setID(id int) {
+// 	t.ID = id
+// }
 
 type Table[T TableInterface] struct {
 	m           sync.Mutex
@@ -109,19 +113,21 @@ func (t *Table[T]) LoadJson(fn string) {
 }
 
 // AddUpdate a row with locking
-func (t *Table[T]) AddUpdate(r T) {
+func (t *Table[T]) AddUpdate(r T) int {
 	found, idx := t.findIndex(r.GetID())
 	if !found {
 		t.m.Lock()
 		// FIX: set ID
+		// r.setID(t.TotalRows() + 1)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
-		return
+		return r.GetID()
 	}
 	// FIX: update row here -> copy data from r to item
 	t.m.Lock()
 	t.rows[idx] = &r
 	t.m.Unlock()
+	return r.GetID()
 }
 
 // Delete a row with locking
@@ -145,7 +151,9 @@ func (t *Table[T]) Delete(id int) {
 }
 
 func (t *Table[T]) findIndex(id int) (bool, int) {
-
+	if id == 0 {
+		return false, -1
+	}
 	for idx, r := range t.rows {
 		item := (*r)
 		if item.GetID() == id {
@@ -156,7 +164,7 @@ func (t *Table[T]) findIndex(id int) (bool, int) {
 	return false, -1
 }
 
-// FindByID item by id
+// FindByID item by id will return nil if not found
 func (t *Table[T]) FindByID(id int) *T {
 	start := time.Now()
 

@@ -67,19 +67,21 @@ func main() {
 	str := "tomas"
 
 	rows = db.Table1.Search(str)
+
 	log.Println("search for :", str)
 	log.Println("search rows count =", len(rows))
 	//fmt.Println(rows[0])
 	fmt.Println()
-	// db.Table1.TotalRows()
+	fmt.Println("rows =", db.Table1.TotalRows())
 
-	// r := Table1{
-	// 	// ID:           100_000,
-	// 	CustomerName: "aaa",
-	// 	ItemCount:    42,
-	// }
+	r := Table1{
+		// ID:           100_000,
+		CustomerName: "aaa",
+		ItemCount:    42,
+	}
 	// r.ID = 100_000
-	// db.Table1.AddUpdate(r)
+	id := db.Table1.AddUpdate(r)
+	fmt.Println("inserted id ", id)
 
 	// db.Table1.Delete(99999)
 	log.Println("id 99,999 =", db.Table1.FindByID(99_999))
@@ -91,9 +93,6 @@ func main() {
 	log.Println("search rows count =", len(rr))
 	log.Println(rr[0])
 	fmt.Println()
-	// db.Table1.AddUpdate(Table1{
-
-	// })
 
 	PrintMemUsage()
 	fmt.Println()
