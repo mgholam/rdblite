@@ -82,6 +82,7 @@ func main() {
 
 	// db.Table1.Delete(99999)
 	log.Println("id 99,999 =", db.Table1.FindByID(99_999))
+	log.Println("id invalid =", db.Table1.FindByID(-1))
 	fmt.Println()
 
 	str = "10017372"

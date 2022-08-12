@@ -164,7 +164,7 @@ func (t *Table[T]) findIndex(id int) (bool, int) {
 }
 
 // FindByID item by id will return nil if not found
-func (t *Table[T]) FindByID(id int) *T {
+func (t *Table[T]) FindByID(id int) T {
 	start := time.Now()
 
 	for _, r := range t.rows {
@@ -172,20 +172,20 @@ func (t *Table[T]) FindByID(id int) *T {
 		item := *r
 		if item.getID() == id {
 			log.Println("find by id time =", time.Since(start))
-			return r
+			return *r
 		}
 	}
 
-	return nil
+	return *new(T)
 }
 
 // Query with a predicate for more control over querying
-func (t *Table[T]) Query(predicate func(r T) bool) []*T {
+func (t *Table[T]) Query(predicate func(r T) bool) []T {
 	start := time.Now()
-	data := []*T{}
+	data := []T{}
 	for _, r := range t.rows {
 		if predicate(*r) {
-			data = append(data, r)
+			data = append(data, *r)
 		}
 	}
 	log.Println("query time =", time.Since(start))
@@ -193,11 +193,11 @@ func (t *Table[T]) Query(predicate func(r T) bool) []*T {
 }
 
 // Search on any field contains str
-func (t *Table[T]) Search(str string) []*T {
+func (t *Table[T]) Search(str string) []T {
 	start := time.Now()
 	str = strings.ToLower(strings.Trim(str, " \t"))
 	v := strings.Split(str, " ")
-	data := []*T{}
+	data := []T{}
 	// FIX: implement OR
 	for _, r := range t.rows {
 		item := *r
@@ -215,7 +215,7 @@ func (t *Table[T]) Search(str string) []*T {
 			vc++
 		}
 		if found == vc {
-			data = append(data, r)
+			data = append(data, *r)
 		}
 	}
 	log.Println("search time =", time.Since(start))
