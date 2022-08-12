@@ -216,7 +216,7 @@ func (t *Table[T]) Search(str string) []*T {
 }
 
 func genstr[T any](item *T) {
-	// FIX: handle time.Time
+	// FIX: handle time.Time, uuid
 	sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
 	for i := 0; i < e.NumField(); i++ {

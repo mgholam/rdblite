@@ -15,19 +15,21 @@ import (
 )
 
 type testref struct {
-	A int
-	B int8
-	C int16
-	D int32
-	E int64
-	I uint
-	F uint8
-	G uint16
-	H uint32
-	J uint64
-	K float32
-	L float64
-	S string
+	A      int
+	B      int8
+	C      int16
+	D      int32
+	E      int64
+	I      uint
+	F      uint8
+	G      uint16
+	H      uint32
+	J      uint64
+	K      float32
+	L      float64
+	S      string
+	T      time.Time
+	rowstr string
 }
 
 func main() {
@@ -47,8 +49,10 @@ func main() {
 		K: 11,
 		L: 12,
 		S: "bob",
+		T: time.Now(),
 	}
 	genstr(&tt)
+	fmt.Println(tt.rowstr)
 
 	db := NewDB()
 	defer db.Close()
