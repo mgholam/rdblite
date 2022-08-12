@@ -118,12 +118,14 @@ func (t *Table[T]) AddUpdate(r T) int {
 		t.m.Lock()
 		// set ID
 		r.setID(t.TotalRows() + 1)
+		genstr(r)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
 		return r.getID()
 	}
 	// FIX: update row here -> copy data from r to item ??
 	t.m.Lock()
+	genstr(r)
 	t.rows[idx] = &r
 	t.m.Unlock()
 	return r.getID()
