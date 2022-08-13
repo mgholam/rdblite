@@ -69,6 +69,11 @@ rows := db.Table1.Query(func(row *Table1) bool {
 	return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 })
 
+// query rows with paging (start, count)
+rows := db.Table1.QueryPaged(10, 5, func(row *Table1) bool {
+	return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
+})
+
 // text search every field
 rows = db.Table1.Search("Moen")
 
