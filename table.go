@@ -182,9 +182,9 @@ func (t *Table[T]) FindByID(id int) T {
 }
 
 // Query with a predicate for more control over querying
-func (t *Table[T]) Query(predicate func(r T) bool) []T {
+func (t *Table[T]) Query(predicate func(row T) bool) []T {
 	start := time.Now()
-	data := []T{}
+	var data []T
 	for _, r := range t.rows {
 		if predicate(*r) {
 			data = append(data, *r)
@@ -194,12 +194,34 @@ func (t *Table[T]) Query(predicate func(r T) bool) []T {
 	return data
 }
 
+// Query with a predicate for more control over querying
+func (t *Table[T]) QueryPaged(start int, count int, predicate func(row T) bool) []T {
+	stime := time.Now()
+	var data []T
+	for _, r := range t.rows {
+		if count == 0 {
+			break
+		}
+		if predicate(*r) {
+			if start == 0 {
+				data = append(data, *r)
+				count--
+			}
+			if start > 0 {
+				start--
+			}
+		}
+	}
+	log.Println("query time =", time.Since(stime))
+	return data
+}
+
 // Search on any field contains str
 func (t *Table[T]) Search(str string) []T {
 	start := time.Now()
 	str = strings.ToLower(strings.Trim(str, " \t"))
 	v := strings.Split(str, " ")
-	data := []T{}
+	var data []T
 	// FIX: implement OR
 	for _, r := range t.rows {
 		item := *r

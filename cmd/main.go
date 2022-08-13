@@ -59,8 +59,13 @@ func main() {
 	rows := db.Table1.Query(func(row *Table1) bool {
 		return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 	})
-
 	log.Println("query rows count =", len(rows))
+	fmt.Println()
+
+	rows = db.Table1.QueryPaged(10, 5, func(row *Table1) bool {
+		return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
+	})
+	log.Println("query paged rows count =", len(rows))
 	fmt.Println()
 
 	str := "tomas"
