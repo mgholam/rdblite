@@ -115,17 +115,17 @@ func (t *Table[T]) LoadJson(fn string) {
 func (t *Table[T]) AddUpdate(r T) int {
 	found, idx := t.findIndex(r.getID())
 	if !found {
+		genstr(r)
 		t.m.Lock()
 		// set ID
 		r.setID(t.TotalRows() + 1)
-		genstr(r)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
 		return r.getID()
 	}
 	// FIX: update row here -> copy data from r to item ??
-	t.m.Lock()
 	genstr(r)
+	t.m.Lock()
 	t.rows[idx] = &r
 	t.m.Unlock()
 	return r.getID()

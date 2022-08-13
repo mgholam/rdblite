@@ -3,4 +3,4 @@
 - sum, group by
 - sort
 - multi thread test
-- full text `time.Time`
+- ~~full text `time.Time`~~
