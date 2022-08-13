@@ -151,20 +151,6 @@ func (t *Table[T]) Delete(id int) {
 	log.Println("delete by id time =", time.Since(start))
 }
 
-func (t *Table[T]) findIndex(id int) (bool, int) {
-	if id == 0 {
-		return false, -1
-	}
-	for idx, r := range t.rows {
-		item := (*r)
-		if item.getID() == id {
-			return true, idx
-		}
-	}
-
-	return false, -1
-}
-
 // FindByID item by id will return nil if not found
 func (t *Table[T]) FindByID(id int) T {
 	start := time.Now()
@@ -194,7 +180,7 @@ func (t *Table[T]) Query(predicate func(row T) bool) []T {
 	return data
 }
 
-// Query with a predicate for more control over querying
+// Query paged with a predicate by start and count
 func (t *Table[T]) QueryPaged(start int, count int, predicate func(row T) bool) []T {
 	stime := time.Now()
 	var data []T
@@ -244,6 +230,20 @@ func (t *Table[T]) Search(str string) []T {
 	}
 	log.Println("search time =", time.Since(start))
 	return data
+}
+
+func (t *Table[T]) findIndex(id int) (bool, int) {
+	if id == 0 {
+		return false, -1
+	}
+	for idx, r := range t.rows {
+		item := (*r)
+		if item.getID() == id {
+			return true, idx
+		}
+	}
+
+	return false, -1
 }
 
 func genstr[T any](item T) {
