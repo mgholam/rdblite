@@ -77,7 +77,7 @@ rows := db.Table1.QueryPaged(10, 5, func(row *Table1) bool {
 // text search every field
 rows = db.Table1.Search("Moen")
 
-// find by ID
+// find by ID -> nil if not found
 row := db.Table1.FindByID(99_999)
 
 // delete by ID

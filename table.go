@@ -41,6 +41,7 @@ type Table[T tableInterface] struct {
 	m           sync.Mutex
 	GobFilename string
 	rows        []*T
+	lastID      int
 }
 
 func (t *Table[T]) TotalRows() int {
@@ -71,8 +72,13 @@ func (t *Table[T]) LoadGob() {
 
 	// generate rowstr for fast Search()
 	start = time.Now()
+
 	for _, r := range t.rows {
 		go genstr(*r)
+		item := *r
+		if item.getID() > t.lastID {
+			t.lastID = item.getID()
+		}
 	}
 	log.Println("init search time =", time.Since(start))
 }
@@ -107,6 +113,10 @@ func (t *Table[T]) LoadJson(fn string) {
 	start = time.Now()
 	for _, r := range t.rows {
 		go genstr(*r)
+		item := *r
+		if item.getID() > t.lastID {
+			t.lastID = item.getID()
+		}
 	}
 	log.Println("init search time =", time.Since(start))
 }
@@ -118,7 +128,8 @@ func (t *Table[T]) AddUpdate(r T) int {
 		genstr(r)
 		t.m.Lock()
 		// set ID
-		r.setID(t.TotalRows() + 1)
+		t.lastID++
+		r.setID(t.lastID)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
 		return r.getID()
