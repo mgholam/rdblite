@@ -56,13 +56,13 @@ func main() {
 	db := NewDB()
 	defer db.Close()
 
-	rows := db.Table1.Query(func(row *Table1) bool {
+	rows := db.Table1.Query(func(row Table1) bool {
 		return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 	})
 	log.Println("query rows count =", len(rows))
 	fmt.Println()
 
-	rows = db.Table1.QueryPaged(10, 5, func(row *Table1) bool {
+	rows = db.Table1.QueryPaged(10, 5, func(row Table1) bool {
 		return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 	})
 	log.Println("query paged rows count =", len(rows))
@@ -74,7 +74,7 @@ func main() {
 
 	log.Println("search for :", str)
 	log.Println("search rows count =", len(rows))
-	//fmt.Println(rows[0])
+	fmt.Println(rows[0])
 	fmt.Println()
 	fmt.Println("rows =", db.Table1.TotalRows())
 
@@ -82,12 +82,14 @@ func main() {
 		CustomerName: "aaa",
 		ItemCount:    42,
 	}
-	id := db.Table1.AddUpdate(&r)
+	id := db.Table1.AddUpdate(r)
 	fmt.Println("inserted id ", id)
 
 	// db.Table1.Delete(99999)
-	log.Println("id 99,999 =", db.Table1.FindByID(99_999))
-	log.Println("id invalid =", db.Table1.FindByID(-1))
+	_, r = db.Table1.FindByID(99_999)
+	log.Println("id 99,999 =", r)
+	_, r = db.Table1.FindByID(-1)
+	log.Println("id invalid =", r)
 	fmt.Println()
 
 	str = "10017372"
@@ -103,53 +105,10 @@ func main() {
 
 func genstr[T any](item *T) {
 	str := fmt.Sprintf("%v", item)
-	// sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
-	// for i := 0; i < e.NumField(); i++ {
-	// 	ef := e.Field(i)
-	// 	switch ef.Kind() {
-	// 	case reflect.String:
-	// 		sb.WriteString(ef.String())
-	// 	case reflect.Int64:
-	// 		sb.WriteString(strconv.FormatInt(ef.Interface().(int64), 10))
-	// 	case reflect.Int8:
-	// 		iv := ef.Interface().(int8)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Int16:
-	// 		iv := ef.Interface().(int16)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Int:
-	// 		iv := ef.Interface().(int)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Int32:
-	// 		iv := ef.Interface().(int32)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Uint64:
-	// 		sb.WriteString(strconv.FormatUint(ef.Interface().(uint64), 10))
-	// 	case reflect.Uint8:
-	// 		iv := ef.Interface().(uint8)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Uint16:
-	// 		iv := ef.Interface().(uint16)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Uint:
-	// 		iv := ef.Interface().(uint)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Uint32:
-	// 		iv := ef.Interface().(uint32)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Float32:
-	// 		iv := ef.Interface().(float32)
-	// 		sb.WriteString(fmt.Sprintf("%f", iv))
-	// 	case reflect.Float64:
-	// 		iv := ef.Interface().(float64)
-	// 		sb.WriteString(fmt.Sprintf("%f", iv))
-	// 	}
-	// 	sb.WriteRune(' ')
-	// }
 	rr := e.FieldByName("rowstr")
 	rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
-	rr.SetString(strings.ToLower(str)) //sb.String()))
+	rr.SetString(strings.ToLower(str))
 }
 
 // -----------------------------------------------------------------------------
@@ -202,9 +161,9 @@ type Doc struct {
 }
 
 type DB struct {
-	Table1    *rdblite.Table[*Table1]
-	Customers *rdblite.Table[*Customers]
-	Docs      *rdblite.Table[*Doc]
+	Table1    *rdblite.Table[Table1]
+	Customers *rdblite.Table[Customers]
+	Docs      *rdblite.Table[Doc]
 }
 
 func (d *DB) Close() {
@@ -218,15 +177,15 @@ func NewDB() *DB {
 
 	db := DB{}
 
-	db.Table1 = &rdblite.Table[*Table1]{
+	db.Table1 = &rdblite.Table[Table1]{
 		GobFilename: "data/table1.gob",
 	}
 
-	db.Customers = &rdblite.Table[*Customers]{
+	db.Customers = &rdblite.Table[Customers]{
 		GobFilename: "data/customers.gob",
 	}
 
-	db.Docs = &rdblite.Table[*Doc]{
+	db.Docs = &rdblite.Table[Doc]{
 		GobFilename: "data/docs.gob",
 	}
 

@@ -16,7 +16,7 @@ import (
 type tableInterface interface {
 	getID() int
 	contains(string) bool
-	setID(int)
+	// setID(int)
 }
 
 // BaseTable to inhierit ID from
@@ -25,17 +25,17 @@ type BaseTable struct {
 	rowstr string
 }
 
-func (t *BaseTable) contains(str string) bool {
+func (t BaseTable) contains(str string) bool {
 	return strings.Contains(t.rowstr, str)
 }
 
-func (t *BaseTable) getID() int {
+func (t BaseTable) getID() int {
 	return t.ID
 }
 
-func (t *BaseTable) setID(id int) {
-	t.ID = id
-}
+// func (t *BaseTable) setID(id int) {
+// 	t.ID = id
+// }
 
 type Table[T tableInterface] struct {
 	m           sync.Mutex
@@ -74,7 +74,7 @@ func (t *Table[T]) LoadGob() {
 	start = time.Now()
 
 	for _, r := range t.rows {
-		go genstr(*r)
+		go genstr(r)
 		item := *r
 		if item.getID() > t.lastID {
 			t.lastID = item.getID()
@@ -112,7 +112,7 @@ func (t *Table[T]) LoadJson(fn string) {
 	log.Println("loading", fn, ",time =", time.Since(start))
 	start = time.Now()
 	for _, r := range t.rows {
-		go genstr(*r)
+		go genstr(r)
 		item := *r
 		if item.getID() > t.lastID {
 			t.lastID = item.getID()
@@ -123,13 +123,17 @@ func (t *Table[T]) LoadJson(fn string) {
 
 // AddUpdate a row with locking
 func (t *Table[T]) AddUpdate(r T) int {
-	genstr(r)
+	genstr(&r)
 	found, idx := t.findIndex(r.getID())
 	if !found {
 		t.m.Lock()
 		// set ID
 		t.lastID++
-		r.setID(t.lastID)
+		e := reflect.ValueOf(&r).Elem()
+		rr := e.FieldByName("ID")
+		rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
+		rr.SetInt(int64(t.lastID))
+		// r.setID(t.lastID)
 		t.rows = append(t.rows, &r)
 		t.m.Unlock()
 		return r.getID()
@@ -155,14 +159,14 @@ func (t *Table[T]) Delete(id int) {
 		t.rows[idx] = t.rows[len(t.rows)-1]
 	}
 	// Erase last element (write zero value)
-	t.rows[len(t.rows)-1] = nil
+	// t.rows[len(t.rows)-1] = *new(T)
 	t.rows = t.rows[:len(t.rows)-1]
 	t.m.Unlock()
 	log.Println("delete by id time =", time.Since(start))
 }
 
 // FindByID item by id will return nil if not found
-func (t *Table[T]) FindByID(id int) T {
+func (t *Table[T]) FindByID(id int) (bool, T) {
 	// start := time.Now()
 
 	for _, r := range t.rows {
@@ -172,11 +176,11 @@ func (t *Table[T]) FindByID(id int) T {
 		t.m.Unlock()
 		if item.getID() == id {
 			// log.Println("find by id time =", time.Since(start))
-			return item
+			return true, item
 		}
 	}
 
-	return *new(T)
+	return false, *new(T)
 }
 
 // Query with a predicate for more control over querying
@@ -245,11 +249,11 @@ func (t *Table[T]) Search(str string) []T {
 }
 
 func (t *Table[T]) findIndex(id int) (bool, int) {
-	if id < 0 {
+	if id <= 0 {
 		return false, -1
 	}
 	for idx, r := range t.rows {
-		item := (*r)
+		item := *r
 		if item.getID() == id {
 			return true, idx
 		}
@@ -258,55 +262,10 @@ func (t *Table[T]) findIndex(id int) (bool, int) {
 	return false, -1
 }
 
-func genstr[T any](item T) {
-	// handle time.Time, uuid
+func genstr[T any](item *T) {
 	str := fmt.Sprintf("%v", item)
-	// sb := strings.Builder{}
 	e := reflect.ValueOf(item).Elem()
-	// for i := 0; i < e.NumField(); i++ {
-	// 	ef := e.Field(i)
-	// 	switch ef.Kind() {
-	// 	case reflect.String:
-	// 		sb.WriteString(ef.String())
-	// 	case reflect.Int64:
-	// 		sb.WriteString(strconv.FormatInt(ef.Interface().(int64), 10))
-	// 	case reflect.Int8:
-	// 		iv := ef.Interface().(int8)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Int16:
-	// 		iv := ef.Interface().(int16)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Int:
-	// 		iv := ef.Interface().(int)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Int32:
-	// 		iv := ef.Interface().(int32)
-	// 		sb.WriteString(strconv.FormatInt(int64(iv), 10))
-	// 	case reflect.Uint64:
-	// 		sb.WriteString(strconv.FormatUint(ef.Interface().(uint64), 10))
-	// 	case reflect.Uint8:
-	// 		iv := ef.Interface().(uint8)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Uint16:
-	// 		iv := ef.Interface().(uint16)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Uint:
-	// 		iv := ef.Interface().(uint)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Uint32:
-	// 		iv := ef.Interface().(uint32)
-	// 		sb.WriteString(strconv.FormatUint(uint64(iv), 10))
-	// 	case reflect.Float32:
-	// 		iv := ef.Interface().(float32)
-	// 		sb.WriteString(fmt.Sprintf("%f", iv))
-	// 	case reflect.Float64:
-	// 		iv := ef.Interface().(float64)
-	// 		sb.WriteString(fmt.Sprintf("%f", iv))
-	// 	}
-
-	// 	sb.WriteRune(' ')
-	// }
 	rr := e.FieldByName("rowstr")
 	rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
-	rr.SetString(strings.ToLower(str)) //sb.String()))
+	rr.SetString(strings.ToLower(str))
 }

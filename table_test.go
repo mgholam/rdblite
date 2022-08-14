@@ -31,10 +31,10 @@ func randStringRunes(n int) string {
 	return string(b)
 }
 
-func gendata() []*Testdata {
-	var data []*Testdata
+func gendata() []Testdata {
+	var data []Testdata
 	for i := 1; i < 100; i++ {
-		t := &Testdata{
+		t := Testdata{
 			Name: randStringRunes(15),
 			Age:  i + 10,
 		}
@@ -48,7 +48,7 @@ func createTest() {
 	b, _ := json.MarshalIndent(gendata(), "", "  ")
 	os.Mkdir("test", 0755)
 	os.WriteFile("test/test.json", b, 0644)
-	tt := Table[*Testdata]{
+	tt := Table[Testdata]{
 		GobFilename: "test/test.gob",
 	}
 	tt.LoadJson("test/test.json")
@@ -57,21 +57,21 @@ func createTest() {
 
 func Test_1(t *testing.T) {
 	createTest()
-	tt := Table[*Testdata]{
+	tt := Table[Testdata]{
 		GobFilename: "test/test.gob",
 	}
 	tt.LoadGob()
 
-	r := tt.FindByID(10)
-	if r != nil {
+	ok, _ := tt.FindByID(10)
+	if ok {
 		tt.Delete(10)
 	}
 
 	tt.Delete(-1)
 
-	r = tt.FindByID(-1)
-	if r == nil {
-		tt.AddUpdate(&Testdata{
+	ok, _ = tt.FindByID(-1)
+	if !ok {
+		tt.AddUpdate(Testdata{
 			Name: "aaa",
 			Age:  42,
 		})
@@ -80,17 +80,17 @@ func Test_1(t *testing.T) {
 	rows := tt.Search("a A")
 	fmt.Println("search 'a A' count=", len(rows))
 
-	rows = tt.Query(func(row *Testdata) bool {
+	rows = tt.Query(func(row Testdata) bool {
 		return strings.Contains(row.Name, "a")
 	})
 	fmt.Println("query 'a' count=", len(rows))
 
-	rows = tt.QueryPaged(1, 3, func(row *Testdata) bool {
+	rows = tt.QueryPaged(1, 3, func(row Testdata) bool {
 		return strings.Contains(row.Name, "a")
 	})
 	fmt.Println("query paged 'a' count=", len(rows))
 
-	r = tt.FindByID(1)
+	_, r := tt.FindByID(1)
 	tt.AddUpdate(r)
 
 	fmt.Println(tt.TotalRows())
@@ -98,7 +98,7 @@ func Test_1(t *testing.T) {
 
 func Test_multithread(t *testing.T) {
 	createTest()
-	tt := Table[*Testdata]{
+	tt := Table[Testdata]{
 		GobFilename: "test/test.gob",
 	}
 	tt.LoadGob()
@@ -109,8 +109,8 @@ func Test_multithread(t *testing.T) {
 
 	go func() {
 		for i := 1; i < 100; i++ {
-			r := tt.FindByID(i)
-			if r != nil {
+			ok, r := tt.FindByID(i)
+			if ok {
 				r.Age += 10
 				tt.AddUpdate(r)
 			}
@@ -119,8 +119,8 @@ func Test_multithread(t *testing.T) {
 	}()
 	go func() {
 		for i := 1; i < 100; i++ {
-			r := tt.FindByID(i)
-			if r != nil {
+			ok, r := tt.FindByID(i)
+			if ok {
 				r.Age += 20
 				tt.AddUpdate(r)
 			}
@@ -133,3 +133,26 @@ func Test_multithread(t *testing.T) {
 	// 	fmt.Println(r.Age)
 	// }
 }
+
+// type Base struct {
+// 	ID int
+// }
+// type Customer struct {
+// 	Base
+// 	Name string
+// }
+
+// func Test_reflect(t *testing.T) {
+// 	c := Customer{
+// 		Name: "aaaa",
+// 	}
+// 	c.ID = 1
+
+// 	e := reflect.ValueOf(&c).Elem()
+// 	for i := 0; i < e.NumField(); i++ {
+// 		fmt.Println(i, " = ", e.Field(i))
+// 	}
+// 	fmt.Println("ID=", e.FieldByName("ID"))
+// 	e.FieldByName("ID").SetInt(42)
+// 	fmt.Println(c.ID)
+// }

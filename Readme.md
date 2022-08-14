@@ -23,7 +23,7 @@ You can create a `DB` struct to contain your "tables" :
 
 ```go
 type DB struct {
-	Table1    *rdblite.Table[*Table1]
+	Table1    *rdblite.Table[Table1]
 	// add more "tables" here
 }
 func (d *DB) Close() {
@@ -37,7 +37,7 @@ And to initialize the `DB`:
 ```go
 func NewDB() *DB {
 	db := DB{}
-	db.Table1 = &rdblite.Table[*Table1]{
+	db.Table1 = &rdblite.Table[Table1]{
 		GobFilename: "data/table1.gob",
 	}
 	if FileExists(db.Table1.GobFilename) {
@@ -65,20 +65,20 @@ db.Table1.LoadJson("table1.json")
 db.Table1.SaveGob()
 
 // query rows
-rows := db.Table1.Query(func(row *Table1) bool {
+rows := db.Table1.Query(func(row Table1) bool {
 	return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 })
 
 // query rows with paging (start, count)
-rows := db.Table1.QueryPaged(10, 5, func(row *Table1) bool {
+rows := db.Table1.QueryPaged(10, 5, func(row Table1) bool {
 	return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 })
 
-// text search every field
-rows = db.Table1.Search("Moen")
+// text search row for "alice" AND "bob" in any of the fields
+rows = db.Table1.Search("alice bob")
 
-// find by ID -> nil if not found
-row := db.Table1.FindByID(99_999)
+// find by ID -> bool, nil if not found
+ok, row := db.Table1.FindByID(99_999)
 
 // delete by ID
 db.Table1.Delete(20)
@@ -91,7 +91,7 @@ r := Table1{
     CustomerName: "aaa",
     ItemCount:    42,
 }
-db.Table1.AddUpdate(&r)
+db.Table1.AddUpdate(r)
 ```
 
 ## results
