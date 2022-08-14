@@ -123,9 +123,9 @@ func (t *Table[T]) LoadJson(fn string) {
 
 // AddUpdate a row with locking
 func (t *Table[T]) AddUpdate(r T) int {
+	genstr(r)
 	found, idx := t.findIndex(r.getID())
 	if !found {
-		genstr(r)
 		t.m.Lock()
 		// set ID
 		t.lastID++
@@ -135,7 +135,6 @@ func (t *Table[T]) AddUpdate(r T) int {
 		return r.getID()
 	}
 	// FIX: update row here -> copy data from r to item ??
-	genstr(r)
 	t.m.Lock()
 	t.rows[idx] = &r
 	t.m.Unlock()
@@ -164,14 +163,16 @@ func (t *Table[T]) Delete(id int) {
 
 // FindByID item by id will return nil if not found
 func (t *Table[T]) FindByID(id int) T {
-	start := time.Now()
+	// start := time.Now()
 
 	for _, r := range t.rows {
 		// 25x faster than reflect.ValueOf(r).Elem()
+		t.m.Lock()
 		item := *r
+		t.m.Unlock()
 		if item.getID() == id {
-			log.Println("find by id time =", time.Since(start))
-			return *r
+			// log.Println("find by id time =", time.Since(start))
+			return item
 		}
 	}
 
@@ -244,7 +245,7 @@ func (t *Table[T]) Search(str string) []T {
 }
 
 func (t *Table[T]) findIndex(id int) (bool, int) {
-	if id == 0 {
+	if id < 0 {
 		return false, -1
 	}
 	for idx, r := range t.rows {
