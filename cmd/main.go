@@ -101,6 +101,8 @@ func main() {
 
 	PrintMemUsage()
 	fmt.Println()
+
+	fmt.Scanln()
 }
 
 func genstr[T any](item *T) {
@@ -167,10 +169,10 @@ type DB struct {
 }
 
 func (d *DB) Close() {
-	// save all tables
-	d.Table1.SaveGob()
-	d.Customers.SaveGob()
-	d.Docs.SaveGob()
+	// close all tables
+	d.Table1.Close()
+	d.Customers.Close()
+	d.Docs.Close()
 }
 
 func NewDB() *DB {

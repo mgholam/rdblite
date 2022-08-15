@@ -13,6 +13,10 @@ import (
 	"unsafe"
 )
 
+const (
+	SAVE_TIMER = 15
+)
+
 type tableInterface interface {
 	getID() int
 	contains(string) bool
@@ -42,6 +46,37 @@ type Table[T tableInterface] struct {
 	GobFilename string
 	rows        []*T
 	lastID      int
+	isDirty     bool
+	initialized bool
+	stimer      *time.Ticker
+}
+
+func (t *Table[T]) init() {
+	if t.initialized {
+		return
+	}
+	log.Println("save timer started...")
+	// start save timer
+	t.stimer = time.NewTicker(SAVE_TIMER * time.Second)
+	go func() {
+		for {
+			<-t.stimer.C
+			if t.isDirty {
+				log.Println("--- timer save ---")
+				t.SaveGob()
+			}
+		}
+	}()
+
+	t.initialized = true
+}
+
+func (t *Table[T]) Close() {
+	log.Println("--- closing table ---")
+	if t.stimer != nil {
+		t.stimer.Stop()
+	}
+	t.SaveGob()
 }
 
 func (t *Table[T]) TotalRows() int {
@@ -81,6 +116,7 @@ func (t *Table[T]) LoadGob() {
 		}
 	}
 	log.Println("init search time =", time.Since(start))
+	t.init()
 }
 
 // Save data for table as gob file
@@ -102,6 +138,7 @@ func (t *Table[T]) SaveGob() {
 	}
 	log.Printf("%s : item count = %d\n", t.GobFilename, len(t.rows))
 	log.Println("write gob", time.Since(start))
+	t.isDirty = false
 }
 
 // Load json file for table
@@ -119,34 +156,38 @@ func (t *Table[T]) LoadJson(fn string) {
 		}
 	}
 	log.Println("init search time =", time.Since(start))
+	t.init()
 }
 
 // AddUpdate a row with locking
 func (t *Table[T]) AddUpdate(r T) int {
+	t.init()
 	genstr(&r)
 	found, idx := t.findIndex(r.getID())
-	if !found {
+	if found {
+		// FIX: update row here -> copy data from r to item ??
 		t.m.Lock()
-		// set ID
-		t.lastID++
-		e := reflect.ValueOf(&r).Elem()
-		rr := e.FieldByName("ID")
-		rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
-		rr.SetInt(int64(t.lastID))
-		// r.setID(t.lastID)
-		t.rows = append(t.rows, &r)
+		t.rows[idx] = &r
 		t.m.Unlock()
+		t.isDirty = true
 		return r.getID()
 	}
-	// FIX: update row here -> copy data from r to item ??
+	// set ID
 	t.m.Lock()
-	t.rows[idx] = &r
+	t.lastID++
+	e := reflect.ValueOf(&r).Elem()
+	rr := e.FieldByName("ID")
+	rr = reflect.NewAt(rr.Type(), unsafe.Pointer(rr.UnsafeAddr())).Elem()
+	rr.SetInt(int64(t.lastID))
+	t.rows = append(t.rows, &r)
+	t.isDirty = true
 	t.m.Unlock()
 	return r.getID()
 }
 
 // Delete a row with locking
 func (t *Table[T]) Delete(id int) {
+	t.init()
 	start := time.Now()
 	found, idx := t.findIndex(id)
 	if !found {
@@ -161,13 +202,14 @@ func (t *Table[T]) Delete(id int) {
 	// Erase last element (write zero value)
 	// t.rows[len(t.rows)-1] = *new(T)
 	t.rows = t.rows[:len(t.rows)-1]
+	t.isDirty = true
 	t.m.Unlock()
 	log.Println("delete by id time =", time.Since(start))
 }
 
 // FindByID item by id will return nil if not found
 func (t *Table[T]) FindByID(id int) (bool, T) {
-	// start := time.Now()
+	start := time.Now()
 
 	for _, r := range t.rows {
 		// 25x faster than reflect.ValueOf(r).Elem()
@@ -175,7 +217,7 @@ func (t *Table[T]) FindByID(id int) (bool, T) {
 		item := *r
 		t.m.Unlock()
 		if item.getID() == id {
-			// log.Println("find by id time =", time.Since(start))
+			log.Println("find by id time =", time.Since(start))
 			return true, item
 		}
 	}

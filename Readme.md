@@ -6,6 +6,7 @@ Features :
 - Full text search all fields of a row `Search("alice bob")` will search for "alice" AND "bob" in any of the fields for a row
 - Query with a predicate function to filter rows
 - `StorageFile` append only data file for really fast storing of `[]byte` like `json`
+- Will auto save dirty tables to disk on a ticker (default 15 secs)
 
 ## How to use
 
@@ -27,8 +28,8 @@ type DB struct {
 	// add more "tables" here
 }
 func (d *DB) Close() {
-	// save all tables
-	d.Table1.SaveGob()
+	// close all tables and save to disk as gob file
+	d.Table1.Close()
 }
 ```
 
