@@ -1,5 +1,6 @@
 data/
 vendor/
+test/
 *.json
 main
 pp.txt
