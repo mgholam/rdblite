@@ -37,10 +37,6 @@ func (t BaseTable) getID() int {
 	return t.ID
 }
 
-// func (t *BaseTable) setID(id int) {
-// 	t.ID = id
-// }
-
 type Table[T tableInterface] struct {
 	m           sync.Mutex
 	GobFilename string

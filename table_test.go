@@ -53,6 +53,7 @@ func createTest() {
 	}
 	tt.LoadJson("test/test.json")
 	tt.SaveGob()
+	tt.Close()
 }
 
 func Test_1(t *testing.T) {
@@ -94,6 +95,7 @@ func Test_1(t *testing.T) {
 	tt.AddUpdate(r)
 
 	fmt.Println(tt.TotalRows())
+	tt.Close()
 }
 
 func Test_multithread(t *testing.T) {
