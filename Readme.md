@@ -6,7 +6,7 @@ Features :
 - Full text search all fields of a row `Search("alice bob")` will search for "alice" AND "bob" in any of the fields for a row
 - Query with a predicate function to filter rows
 - `StorageFile` append only data file for really fast storing of `[]byte` like `json`
-- Will auto save dirty tables to disk on a ticker (default 15 secs)
+- Will auto save dirty tables to disk on a ticker (default every 15 secs)
 
 ## How to use
 
@@ -69,28 +69,35 @@ db.Table1.SaveGob()
 rows := db.Table1.Query(func(row Table1) bool {
 	return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 })
+fmt.Println(rows)
 
 // query rows with paging (start, count)
-rows := db.Table1.QueryPaged(10, 5, func(row Table1) bool {
+rows = db.Table1.QueryPaged(10, 5, func(row Table1) bool {
 	return strings.Contains(row.CustomerName, "Tomas") && row.ItemCount < 5
 })
+fmt.Println(rows)
 
 // text search row for "alice" AND "bob" in any of the fields
 rows = db.Table1.Search("alice bob")
+fmt.Println(rows)
 
 // find by ID -> bool, nil if not found
 ok, row := db.Table1.FindByID(99_999)
+if ok {
+	fmt.Println(row)
+}
 
 // delete by ID
 db.Table1.Delete(20)
 
 // row count
 count := db.Table1.TotalRows()
+fmt.Println(count)
 
 // add/update a row
 r := Table1{
-    CustomerName: "aaa",
-    ItemCount:    42,
+	CustomerName: "aaa",
+	ItemCount:    42,
 }
 db.Table1.AddUpdate(r)
 ```
